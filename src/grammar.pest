@@ -1,0 +1,29 @@
+program = _{ SOI ~ statement* ~ EOI }
+
+statement = _{
+  var_declaration
+  | var_assignment
+  | fn_call
+}
+
+identifier = { ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }
+number     = { ASCII_DIGIT+ }
+
+literal = {
+    number
+  | identifier
+  | "null"
+}
+
+expression = {
+    literal
+  | identifier
+}
+
+var_declaration = { "var" ~ identifier ~ "=" ~ expression }
+
+var_assignment = { identifier ~ "=" ~ expression }
+
+fn_call = { identifier ~ "(" ~ expression ~ ")" }
+
+WHITESPACE = _{ " " | NEWLINE }
