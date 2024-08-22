@@ -1,9 +1,7 @@
 program = _{ SOI ~ statement* ~ EOI }
 
 statement = _{
-  var_declaration
-  | var_assignment
-  | fn_call
+    (var_declaration | var_assignment | fn_call)? ~ ";"
 }
 
 identifier = { ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }
@@ -20,7 +18,7 @@ expression = {
   | identifier
 }
 
-var_declaration = { "var" ~ identifier ~ "=" ~ expression }
+var_declaration = { "var" ~ identifier }
 
 var_assignment = { identifier ~ "=" ~ expression }
 

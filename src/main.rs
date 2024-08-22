@@ -1,3 +1,5 @@
+use std::{collections::HashMap, iter::Map};
+
 use cranelift::{
     codegen::ir::{self, Function},
     prelude::{
@@ -21,20 +23,20 @@ fn main() {
 
     let mut fn_builder_ctx = FunctionBuilderContext::new();
 
-    let mut func = Function::with_name_signature(ir::UserFuncName::user(0, 0), sig);
+    let mut main_func = Function::with_name_signature(ir::UserFuncName::user(0, 0), sig);
 
-    let mut builder = FunctionBuilder::new(&mut func, &mut fn_builder_ctx);
+    let mut builder = FunctionBuilder::new(&mut main_func, &mut fn_builder_ctx);
 
-    let block0 = builder.create_block();
+    let main_block = builder.create_block();
 
-    
+    let mut variables = HashMap::new();
 
     let parser = MyParser::parse(
         Rule::program,
         r"
-        var num = 10
-        num = 12
-        print(num)
+        var num;
+        num = 12;
+        print(num);
         ",
     )
     .unwrap();
@@ -49,23 +51,39 @@ fn main() {
                 let mut pairs = pair.into_inner();
 
                 let identifier = pairs.next().unwrap();
+                //let value = pairs.next().unwrap().into_inner().next().unwrap();
+                //println!("{} {}", identifier.as_str(), value.as_str());
+
+                //let val_u32 = value.as_str().parse::<i64>().unwrap();
+
+
+
+                let var = Variable::new(variables.len() + 1);
+                builder.declare_var(var, ir::types::I32);
+
+                variables.insert(identifier.as_str(), var);
+
+                //builder.def_var(var, tmp);
+            },
+            Rule::fn_call => {},
+            Rule::var_assignment => {
+                let mut pairs = pair.into_inner();
+
+                let identifier = pairs.next().unwrap();
                 let value = pairs.next().unwrap().into_inner().next().unwrap();
+
                 println!("{} {}", identifier.as_str(), value.as_str());
 
-                let val_u32 = value.as_str().parse::<i64>().unwrap();
+                let parsed_value = value.as_str().parse::<i32>().unwrap();
 
-                let tmp = builder.ins().iconst(ir::types::I32, val_u32);
+                //let cl_val = builder.ins().iconst(ir::types::I32, parsed_value);
 
-                let var = Variable::new(0);
-                builder.declare_var(var, ir::types::I32);
-                builder.def_var(var, tmp);
-            }
-            Rule::fn_call => {}
-            Rule::var_assignment => {}
-            Rule::EOI => {}
-            Rule::program => {}
-            Rule::statement => {}
-            Rule::identifier => {}
+                //builder.def_var(, val)
+            },
+            Rule::EOI => {},
+            Rule::program => {},
+            Rule::statement => {},
+            Rule::identifier => {},
             Rule::number => {}
             Rule::literal => {}
             Rule::expression => {}
