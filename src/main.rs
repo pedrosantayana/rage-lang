@@ -1,9 +1,9 @@
-use std::{collections::HashMap, iter::Map};
+use std::collections::HashMap;
 
 use cranelift::{
-    codegen::ir::{self, Function},
+    codegen::{ir::{self, Function}, verify_function},
     prelude::{
-        isa::CallConv, AbiParam, EntityRef, FunctionBuilder, FunctionBuilderContext, InstBuilder, Signature, Value, Variable
+        isa::CallConv, settings, AbiParam, EntityRef, FunctionBuilder, FunctionBuilderContext, InstBuilder, Signature, Value, Variable
     },
 };
 use pest::Parser;
@@ -28,6 +28,12 @@ fn main() {
     let mut builder = FunctionBuilder::new(&mut main_func, &mut fn_builder_ctx);
 
     let main_block = builder.create_block();
+
+    builder.append_block_params_for_function_params(main_block);
+
+    builder.switch_to_block(main_block);
+
+    builder.seal_block(main_block);
 
     let mut variables = HashMap::new();
 
@@ -69,18 +75,20 @@ fn main() {
             Rule::var_assignment => {
                 let mut pairs = pair.into_inner();
 
-                let identifier = pairs.next().unwrap();
+                let identifier = pairs.next().unwrap().as_str();
                 let value = pairs.next().unwrap().into_inner().next().unwrap();
 
-                println!("{} {}", identifier.as_str(), value.as_str());
+                println!("{} {}", identifier, value.as_str());
 
-                let parsed_value = value.as_str().parse::<i32>().unwrap();
+                let parsed_value = value.as_str().parse::<i64>().unwrap();
 
-                //let cl_val = builder.ins().iconst(ir::types::I32, parsed_value);
+                let cl_val = builder.ins().iconst(ir::types::I32, parsed_value);
 
-                //builder.def_var(, val)
+                builder.def_var(*variables.get(identifier).unwrap(), cl_val);
             },
-            Rule::EOI => {},
+            Rule::EOI => {
+
+            },
             Rule::program => {},
             Rule::statement => {},
             Rule::identifier => {},
@@ -90,4 +98,17 @@ fn main() {
             Rule::WHITESPACE => {}
         }
     }
+
+    let r = builder.ins().iconst(ir::types::I32, 1);
+    builder.ins().return_(&[r]);
+    builder.finalize();
+
+    
+    let flags = settings::Flags::new(settings::builder());
+    let res = verify_function(&main_func, &flags);
+    println!("{}", main_func.display());
+    if let Err(errors) = res {
+        panic!("{}", errors);
+    }
+
 }
