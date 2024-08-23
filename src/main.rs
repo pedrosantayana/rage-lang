@@ -1,13 +1,17 @@
 use std::collections::HashMap;
 
 use cranelift::{
-    codegen::{ir::{self, Function}, verify_function},
+    codegen::{control::ControlPlane, ir::{self, Function, LibCall}, verify_function, Context},
     prelude::{
-        isa::CallConv, settings, AbiParam, EntityRef, FunctionBuilder, FunctionBuilderContext, InstBuilder, Signature, Value, Variable
+        isa::{self, CallConv}, settings, AbiParam, EntityRef, FunctionBuilder, FunctionBuilderContext, InstBuilder, Signature, Value, Variable
     },
 };
+
+use cranelift_jit::JITBuilder;
+use cranelift_module::Module;
 use pest::Parser;
 use pest_derive::Parser;
+use target_lexicon::Triple;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -15,6 +19,8 @@ struct MyParser;
 
 fn main() {
     println!("Hello, world!");
+
+    println!("{:?}", LibCall::all_libcalls());
 
     let mut sig = Signature::new(CallConv::SystemV);
 
@@ -40,9 +46,14 @@ fn main() {
     let parser = MyParser::parse(
         Rule::program,
         r"
-        var num;
+        var num
+        ;
+        var numasdas;
+        var nuasdasdasm;
+
         num = 12;
         print(num);
+        
         ",
     )
     .unwrap();
@@ -71,7 +82,6 @@ fn main() {
 
                 //builder.def_var(var, tmp);
             },
-            Rule::fn_call => {},
             Rule::var_assignment => {
                 let mut pairs = pair.into_inner();
 
@@ -86,9 +96,10 @@ fn main() {
 
                 builder.def_var(*variables.get(identifier).unwrap(), cl_val);
             },
-            Rule::EOI => {
+            Rule::fn_call => {
 
             },
+            Rule::EOI => {},
             Rule::program => {},
             Rule::statement => {},
             Rule::identifier => {},
@@ -110,5 +121,25 @@ fn main() {
     if let Err(errors) = res {
         panic!("{}", errors);
     }
+
+
+    let mut jit = JITBuilder::new(cranelift_module::default_libcall_names()).unwrap();
+
+    let mut module = cranelift_jit::JITModule::new(jit);
+
+    let builder = settings::builder();
+    let flags = settings::Flags::new(builder);
+    
+    let isa = match isa::lookup(Triple::host()) {
+        Err(err) => panic!("Error looking up target: {}", err),
+        Ok(isa_builder) => isa_builder.finish(flags).unwrap(),
+    };
+
+    let mut cp = ControlPlane::default();
+
+    let mut ctx = Context::for_function(main_func);
+    let code = ctx.compile(&*isa, &mut cp).unwrap();
+
+    
 
 }
