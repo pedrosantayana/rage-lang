@@ -1,17 +1,12 @@
 [package]
 name = "loucura"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 
 [dependencies]
 cranelift = "0.111.0"
-cranelift-jit = "0.111.0"
 cranelift-module = "0.111.0"
 cranelift-object = "0.111.0"
-
-
 pest = "2.7.11"
 pest_derive = "2.7.11"
 target-lexicon = "0.12.16"
-old-target-lexicon = {package = "target-lexicon", version = "0.11.1"}
-faerie = "0.16.0"
