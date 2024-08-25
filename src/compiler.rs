@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::File};
+use std::{collections::HashMap, fs::OpenOptions, path::PathBuf};
 
 use cranelift::{
     codegen::{ir::{self, FuncRef, Function, UserFuncName}, Context},
@@ -11,7 +11,7 @@ use cranelift_object::ObjectModule;
 
 use crate::parser;
 
-pub fn compile(input: &str) {
+pub fn compile(input: &str, output: &PathBuf) {
     let mut shared_builder = settings::builder();
     shared_builder.enable("is_pic").unwrap();
     let shared_flags = settings::Flags::new(shared_builder);
@@ -70,26 +70,45 @@ pub fn compile(input: &str) {
     let res = obj_module.finish();
 
     // Write object bytes to file
-    let mut file = File::create("OUTPUT.o").unwrap();
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(output).unwrap();
     res.object.write_stream(&mut file).unwrap();
 }
 
 fn gen_libc<'a>(obj_module: ObjectModule, cl_fn_builder: FunctionBuilder<'a>) -> (ObjectModule, FunctionBuilder<'a>, HashMap<PedroLibC, FuncRef>) {
     let mut libc_decl: HashMap<PedroLibC, FuncRef> = HashMap::new();
 
-    let (obj_module, cl_fn_builder,  f) = libc_putchar_decl(obj_module, cl_fn_builder);
+    let (obj_module, cl_fn_builder,  f) = libc_put_char_decl(obj_module, cl_fn_builder);
 
     libc_decl.insert(PedroLibC::PutChar, f);
+
+    let (obj_module, cl_fn_builder,  f) = libc_get_char_decl(obj_module, cl_fn_builder);
+
+    libc_decl.insert(PedroLibC::GetChar, f);
 
     (obj_module, cl_fn_builder, libc_decl)
 }
 
-fn libc_putchar_decl<'a>(mut obj_module: ObjectModule, cl_fn_builder: FunctionBuilder<'a>) -> (ObjectModule, FunctionBuilder<'a>, FuncRef) {
+fn libc_put_char_decl<'a>(mut obj_module: ObjectModule, cl_fn_builder: FunctionBuilder<'a>) -> (ObjectModule, FunctionBuilder<'a>, FuncRef) {
     let mut putchar_sig = obj_module.make_signature();
     putchar_sig.params.push(AbiParam::new(ir::types::I8));
     putchar_sig.returns.push(AbiParam::new(ir::types::I32));
     let putchar_fn = obj_module
         .declare_function("putchar", Linkage::Import, &putchar_sig)
+        .unwrap();
+    let local_putchar = obj_module.declare_func_in_func(putchar_fn, cl_fn_builder.func);
+
+    (obj_module, cl_fn_builder, local_putchar)
+}
+
+fn libc_get_char_decl<'a>(mut obj_module: ObjectModule, cl_fn_builder: FunctionBuilder<'a>) -> (ObjectModule, FunctionBuilder<'a>, FuncRef) {
+    let mut putchar_sig = obj_module.make_signature();
+    putchar_sig.params.push(AbiParam::new(ir::types::I8));
+    putchar_sig.returns.push(AbiParam::new(ir::types::I32));
+    let putchar_fn = obj_module
+        .declare_function("getchar", Linkage::Import, &putchar_sig)
         .unwrap();
     let local_putchar = obj_module.declare_func_in_func(putchar_fn, cl_fn_builder.func);
 
