@@ -1,5 +1,7 @@
 # Rage Programming Language
 
+[![Rust](https://github.com/pedrosantayana/rage-lang/actions/workflows/rust.yml/badge.svg)](https://github.com/pedrosantayana/rage-lang/actions/workflows/rust.yml)
+
 **Rage** is a compiled programming language designed for low-level systems programming. Developed using Rust, Rage utilizes Cranelift for efficient backend code generation and Pest for flexible parsing.
 
 ## Features
