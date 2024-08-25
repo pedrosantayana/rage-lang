@@ -1,4 +1,4 @@
-# Rage Programming Language
+# Rage Programming Language [WIP]
 
 [![Rust](https://github.com/pedrosantayana/rage-lang/actions/workflows/rust.yml/badge.svg)](https://github.com/pedrosantayana/rage-lang/actions/workflows/rust.yml)
 
