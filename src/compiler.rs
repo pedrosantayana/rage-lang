@@ -56,7 +56,7 @@ pub fn compile(input: &str, output: &PathBuf) {
     cl_fn_builder.seal_block(block);
 
     // Parser
-    cl_fn_builder = parser::PedroParser::parse(input, cl_fn_builder, libc_decl);
+    cl_fn_builder = parser::RageParser::parse(input, cl_fn_builder, libc_decl);
 
     // Return 0 and seal all blocks
     let val = cl_fn_builder.ins().iconst(ir::types::I32, 0);

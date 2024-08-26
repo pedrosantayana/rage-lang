@@ -1,16 +1,7 @@
-var c: i8;
 
-c = 82;
-libc_putchar(c);
+libc_putchar('r')
+libc_putchar('a')
+libc_putchar('g')
+libc_putchar('e')
 
-c = 65;
-libc_putchar(c);
-
-c = 71;
-libc_putchar(c);
-
-c = 69;
-libc_putchar(c);
-
-c = 10;
-libc_putchar(c);
+libc_putchar(10)

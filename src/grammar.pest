@@ -1,29 +1,69 @@
 program = _{ SOI ~ statement* ~ EOI }
 
-statement = _{
-    (var_declaration | var_assignment | fn_call)? ~ ";"
-}
-
 identifier = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-number     = { ASCII_DIGIT+ }
+
+// literals
+number  = { ASCII_DIGIT+ }
+char    = { ASCII }
+string  = { "\"" ~ (ASCII)* ~ "\"" }
+boolean = { "true" | "false" }
+null    = { "null" }
 
 literal = {
     number
+  | "\'" ~ char ~ "\'"
+  | string
+  | boolean
+  | null
+}
+
+primitive_type = {
+    "i8"
+  | "i16"
+  | "i32"
+  | "i64"
+  | "f32"
+  | "f64"
+  | "bool"
+  | "char"
+  | "str"
+  | "ptr"
   | "null"
+}
+
+typing = { ":" ~ primitive_type }
+
+statement = _{
+    var_declaration
+  | var_definition
+  | fn_call
+  | fn_def
 }
 
 expression = {
     literal
   | identifier
+  | fn_call
 }
 
-var_declaration = { "var" ~ identifier ~ ":" ~ primitive_types }
+var_declaration = { "var" ~ identifier ~ typing }
 
-primitive_types = { "i8" | "i32" }
+var_definition = { identifier ~ "=" ~ expression }
 
+fn_call = { identifier ~ "(" ~ expr_list? ~ ")" }
 
-var_assignment = { identifier ~ "=" ~ expression }
+fn_def = {
+    "fn" ~ identifier ~ "(" ~ param_decl? ~ ")" ~ typing? ~ block_statement
+}
 
-fn_call = { identifier ~ "(" ~ expression ~ ")" }
+param_decl = {
+    (identifier ~ typing ~ ",")* ~ (identifier ~ typing)
+}
+
+expr_list = _{ (expression ~ ",")* ~ expression }
+
+block_statement = {
+    "{" ~ statement* ~ "}"
+}
 
 WHITESPACE = _{ " " | NEWLINE }
