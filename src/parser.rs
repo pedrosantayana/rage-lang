@@ -271,34 +271,3 @@ enum RageExpr {
     Literal(Value),
     Identifier(String)
 }
-
-#[test]
-fn test_parse_literal() {
-
-    let input = "null";
-
-    let literal_pair = RagePestParser::parse(Rule::literal, input)
-        .unwrap()
-        .into_iter()
-        .next()
-        .unwrap();
-
-    let pair = literal_pair.into_inner().next().unwrap();
-
-    let val_str = pair.as_str();
-
-    println!("{}", val_str);
-
-    match pair.as_rule() {
-        Rule::number => {
-            let val_str = pair.as_str();
-
-            println!("{}", val_str);
-        },
-        Rule::char => todo!(),
-        Rule::string => todo!(),
-        Rule::boolean => todo!(),
-        Rule::null => todo!(),
-        _ => unimplemented!()
-    }
-}
